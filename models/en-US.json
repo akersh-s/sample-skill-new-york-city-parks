@@ -1,0 +1,165 @@
+{
+  "interactionModel": {
+      "languageModel": {
+          "invocationName": "new york city parks",
+          "intents": [
+              {
+                  "name": "AMAZON.FallbackIntent",
+                  "samples": []
+              },
+              {
+                  "name": "AMAZON.CancelIntent",
+                  "samples": []
+              },
+              {
+                  "name": "AMAZON.HelpIntent",
+                  "samples": []
+              },
+              {
+                  "name": "AMAZON.StopIntent",
+                  "samples": []
+              },
+              {
+                  "name": "AMAZON.NavigateHomeIntent",
+                  "samples": []
+              },
+              {
+                  "name": "ReccommendEventIntent",
+                  "slots": [
+                      {
+                          "name": "category",
+                          "type": "categoryType",
+                          "samples": [
+                              "feel like doing something {category}",
+                              "i like {category}",
+                              "{category} sounds cool",
+                              "{category}"
+                          ]
+                      },
+                      {
+                          "name": "borough",
+                          "type": "boroughType"
+                      }
+                  ],
+                  "samples": [
+                      "{borough}",
+                      "around {borough}",
+                      "near {borough}",
+                      "{category}",
+                      "for a {category} event",
+                      "for an event",
+                      "im bored",
+                      "something to do",
+                      "find me something to do"
+                  ]
+              }
+          ],
+          "types": [
+              {
+                  "name": "categoryType",
+                  "values": [
+                      {
+                          "id": "History",
+                          "name": {
+                              "value": "history",
+                              "synonyms": [
+                                  "days of yore",
+                                  "good old days"
+                              ]
+                          }
+                      },
+                      {
+                          "id": "Fitness",
+                          "name": {
+                              "value": "fitness"
+                          }
+                      },
+                      {
+                          "id": "Nature",
+                          "name": {
+                              "value": "nature",
+                              "synonyms": [
+                                  "outdoorsy",
+                                  "outdoors"
+                              ]
+                          }
+                      }
+                  ]
+              },
+              {
+                  "name": "boroughType",
+                  "values": [
+                      {
+                          "id": "Staten",
+                          "name": {
+                              "value": "staten island"
+                          }
+                      },
+                      {
+                          "id": "Bronx",
+                          "name": {
+                              "value": "the bronx"
+                          }
+                      },
+                      {
+                          "id": "Queens",
+                          "name": {
+                              "value": "queens"
+                          }
+                      },
+                      {
+                          "id": "Brooklyn",
+                          "name": {
+                              "value": "brooklyn"
+                          }
+                      },
+                      {
+                          "id": "Manhattan",
+                          "name": {
+                              "value": "manhattan"
+                          }
+                      }
+                  ]
+              }
+          ]
+      },
+      "dialog": {
+          "intents": [
+              {
+                  "name": "ReccommendEventIntent",
+                  "confirmationRequired": false,
+                  "prompts": {},
+                  "slots": [
+                      {
+                          "name": "category",
+                          "type": "categoryType",
+                          "confirmationRequired": false,
+                          "elicitationRequired": true,
+                          "prompts": {
+                              "elicitation": "Elicit.Slot.1246677220677.857802684721"
+                          }
+                      },
+                      {
+                          "name": "borough",
+                          "type": "boroughType",
+                          "confirmationRequired": false,
+                          "elicitationRequired": false,
+                          "prompts": {}
+                      }
+                  ]
+              }
+          ]
+      },
+      "prompts": [
+          {
+              "id": "Elicit.Slot.1246677220677.857802684721",
+              "variations": [
+                  {
+                      "type": "PlainText",
+                      "value": "Which sounds interesting to you, Nature, History, or Fitness?"
+                  }
+              ]
+          }
+      ]
+  }
+}
