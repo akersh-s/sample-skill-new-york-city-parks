@@ -2,6 +2,11 @@
 /* eslint-disable  no-console */
 
 const Alexa = require('ask-sdk-core');
+// Load the AWS SDK for Node.js
+const AWS = require('aws-sdk');
+const dynamo = new AWS.DynamoDB.DocumentClient();
+const TABLE_NAME = 'aws-serverless-repository-NYC-Parks-Events-Crawler-EventsTable-TMA80U7K3KX8';
+
 
 const LaunchRequestHandler = {
   canHandle(handlerInput) {
@@ -13,8 +18,8 @@ const LaunchRequestHandler = {
 
     return handlerInput.responseBuilder
       .speak(speechText + repromptText)
-      .reprompt(speechText)
-      .withSimpleCard('Hello World', speechText)
+      .reprompt(repromptText)
+      .withSimpleCard('New York City Parks', speechText)
       .getResponse();
   },
 };
@@ -24,42 +29,63 @@ const ReccommendEventIntentHandler = {
     return handlerInput.requestEnvelope.request.type === 'IntentRequest'
       && handlerInput.requestEnvelope.request.intent.name === 'ReccommendEventIntent';
   },
-  handle(handlerInput) {
+  async handle(handlerInput) {
 
     const dialogState = handlerInput.requestEnvelope.request.dialogState;
     
     if (dialogState === `STARTED` || dialogState === `IN PROGRESS`) {
+      //Begin dialog management if skill is in the started/in progress state
       handlerInput.responseBuilder.addDelegateDirective(handlerInput.requestEnvelope.request.intent);
+
     } else {
 
-      const boroughId = handlerInput.requestEnvelope.request.intent.slots.borough.resolutions.resolutionsPerAuthority[0].values[0].id;
-      const categoryId = handlerInput.requestEnvelope.request.intent.slots.category.resolutions.resolutionsPerAuthority[0].values[0].id;
+      //Get slot values for dynamodb lookup
+      const boroughId = handlerInput.requestEnvelope.request.intent.slots.borough.resolutions.resolutionsPerAuthority[0].values[0].value.id;
+      const categoryId = handlerInput.requestEnvelope.request.intent.slots.category.resolutions.resolutionsPerAuthority[0].values[0].value.id;
 
-      let result = {
-        "borough": "Manhattan",
-        "categories": [
-          "Nature",
-          "History",
-          "Tours"
-        ],
-        "day": " 6",
-        "description": "Visit some of the park's most famous landmarks, including Conservatory Water, Bethesda Terrace, and The Lake, on this east-to-west tour led by Central Park Conservancy guides.",
-        "endDate": "2018-09-06T15:30:00-04:00",
-        "id": "/events/2018/09/06/central-park-tour-heart-of-the-park",
-        "location": "Samuel F. B. Morse Statue",
-        "month": "Sep",
-        "name": "Central Park Tour: Heart of the Park",
-        "startDate": "2018-09-06T14:00:00-04:00",
-        "streetAddress": "null"
+      console.log("Borough is = " + boroughId);
+      console.log("Category is = " + categoryId);
+      
+      //Set dynamodb query params
+      var params = {
+    		"TableName" : TABLE_NAME,
+    		FilterExpression: "#borough = :borough and contains(#categories, :categories)",
+            ExpressionAttributeNames: {
+                "#borough":"borough",
+                "#categories":"categories"
+                },
+            ExpressionAttributeValues : {
+                ':borough' : boroughId,
+                ':categories' : categoryId
+            }
       };
+      
+      //Make asynchronous scan query to dynamodb
+      let response = await dynamo.scan(params).promise();
+      
+      console.log('++++++RESPONSE++++++')
+      console.log(response);
 
+      //Get a random result from the response array
+      let itemIndexPosition = randomIntFromInterval(0, response.Count);
+      let result = response.Items[itemIndexPosition];
+
+      console.log('++++++RESULT++++++')
+      console.log(result);
+
+      //Slot for explicit confirmation of what the end user said
       const categoryValue =  handlerInput.requestEnvelope.request.intent.slots.category.value;
+
+      //Format output speech
       const speechText = categoryValue + '. Got it!' + ' You can check out the ' + result.name + ' event. ' + result.description + 
                         ' It\'s at the ' + result.location +  ' in ' + result.borough + '. The details are in your Alexa App. Have fun!';
 
+      //Generate link for event details
+      const eventDetails = 'https://www.nycgovparks.org' + result.id
+
       handlerInput.responseBuilder
         .speak(speechText)
-        .withSimpleCard(result.name, result.description)
+        .withSimpleCard(result.name, eventDetails)
         .withShouldEndSession(true);
     }
 
@@ -95,7 +121,6 @@ const CancelAndStopIntentHandler = {
 
     return handlerInput.responseBuilder
       .speak(speechText)
-      .withSimpleCard('Hello World', speechText)
       .getResponse();
   },
 };
@@ -137,3 +162,18 @@ exports.handler = skillBuilder
   )
   .addErrorHandlers(ErrorHandler)
   .lambda();
+
+
+
+//***************************//
+//**** HELPER FUNCTIONS *****//
+//***************************//
+
+//Gets Random Number based on a min/max value
+function randomIntFromInterval(min, max) {
+	//subtract 1 from max since arrays start at position 0
+	let max = max - 1;
+
+	let randomInt = Math.floor(Math.random() * (max - min + 1) + min);
+	return randomInt;
+}
